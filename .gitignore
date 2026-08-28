@@ -1,0 +1,7 @@
+node_modules/
+hostinger-dist/
+releases/
+config.php
+.env*
+.DS_Store
+npm-debug.log*

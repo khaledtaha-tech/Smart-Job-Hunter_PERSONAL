@@ -1,0 +1,25 @@
+{
+  "name": "smart-job-hunter",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --config hostinger/vite.config.ts",
+    "build": "npm run build:hostinger",
+    "build:hostinger": "vite build --config hostinger/vite.config.ts",
+    "build:editions": "bash scripts/build-editions.sh",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "lucide-react": "^0.468.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^6.0.2",
+    "typescript": "^5.9.3",
+    "vite": "^8.0.13"
+  }
+}
