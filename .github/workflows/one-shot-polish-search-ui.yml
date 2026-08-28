@@ -1,0 +1,124 @@
+name: One-shot Search UI Polish
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/one-shot-polish-search-ui.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Apply Reset Search and typography polish
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          ts_path = Path('app/job-hunter.tsx')
+          text = ts_path.read_text(encoding='utf-8')
+
+          replacements = [
+              (
+                  'subtitle: "Your focused job-search workspace", plastics: "My Plastics Profile", general: "All Career Fields", add: "Add application", run: "Run search", saveProfile: "Save profile",',
+                  'subtitle: "Your focused job-search workspace", plastics: "My Plastics Profile", general: "All Career Fields", add: "Add application", run: "Run search", saveProfile: "Save profile", resetSearch: "Reset Search",'
+              ),
+              (
+                  'subtitle: "مساحة منظمة للبحث عن الوظائف", plastics: "مجالي: البلاستيك", general: "كل المجالات", add: "إضافة وظيفة", run: "تشغيل البحث", saveProfile: "حفظ الإعداد",',
+                  'subtitle: "مساحة منظمة للبحث عن الوظائف", plastics: "مجالي: البلاستيك", general: "كل المجالات", add: "إضافة وظيفة", run: "تشغيل البحث", saveProfile: "حفظ الإعداد", resetSearch: "إعادة ضبط البحث",'
+              ),
+              (
+                  'profiles={profiles} loadProfile={(p: Profile) => { setMode(p.field === "Plastics & Manufacturing" && EDITION.showPlastics ? "plastics" : "general"); if (p.field !== "Plastics & Manufacturing") setField(FIELDS[p.field] ? p.field : "Custom / Other"); setJobs(p.jobs); setKeywords(p.keywords); setCountries(p.countries); setSites(p.sites.filter(id => SEARCH_SITES.slice(0, allowedSiteCount).some(source => source.id === id))); }} openProfile={openProfile} />}',
+                  'profiles={profiles} loadProfile={(p: Profile) => { setMode(p.field === "Plastics & Manufacturing" && EDITION.showPlastics ? "plastics" : "general"); if (p.field !== "Plastics & Manufacturing") setField(FIELDS[p.field] ? p.field : "Custom / Other"); setJobs(p.jobs); setKeywords(p.keywords); setCountries(p.countries); setSites(p.sites.filter(id => SEARCH_SITES.slice(0, allowedSiteCount).some(source => source.id === id))); }} openProfile={openProfile} resetSearch={() => { setJobs([]); setKeywords([]); setCountries([]); setSites([]); setPeriod("all"); }} />}'
+              ),
+              (
+                  'const { t, policy, upgrade, mode, field, setField, jobs, setJobs, keywords, setKeywords, countries, setCountries, sites, setSites, period, setPeriod, query, toggle, runSearch, profiles, loadProfile, openProfile } = props;',
+                  'const { t, policy, upgrade, mode, field, setField, jobs, setJobs, keywords, setKeywords, countries, setCountries, sites, setSites, period, setPeriod, query, toggle, runSearch, profiles, loadProfile, openProfile, resetSearch } = props;'
+              ),
+              (
+                  'action={<button className="btn secondary" onClick={openProfile}><Plus size={17} />{t.saveProfile}</button>} />',
+                  'action={<div className="button-row search-heading-actions"><button className="btn secondary reset-search-btn" onClick={resetSearch}><Trash2 size={17} />{t.resetSearch}</button><button className="btn secondary" onClick={openProfile}><Plus size={17} />{t.saveProfile}</button></div>} />'
+              ),
+          ]
+
+          for old, new in replacements:
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'Expected exactly one match, found {count}: {old[:90]}')
+              text = text.replace(old, new, 1)
+
+          ts_path.write_text(text, encoding='utf-8')
+
+          css_path = Path('app/globals.css')
+          css = css_path.read_text(encoding='utf-8')
+          font_import = '@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Tajawal:wght@400;500;600;700;800&display=swap");\n'
+          if not css.startswith('@import url("https://fonts.googleapis.com'):
+              css = font_import + css
+
+          marker = '/* Screenshot-ready typography polish */'
+          if marker not in css:
+              css += '''\n\n/* Screenshot-ready typography polish */
+body { font-family:"Inter",ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif; }
+.app-shell.rtl { font-family:"Tajawal","Inter",Tahoma,Arial,sans-serif; }
+.brand strong { font-size:16px; }
+.brand span { font-size:11px; }
+.nav-list button { font-size:15px; }
+.sidebar-profile strong { font-size:13px; }
+.sidebar-profile span { font-size:11px; }
+.mode-switch button { font-size:13px; }
+.user-chip { font-size:13px; }
+.plan-badge { font-size:11px; }
+.page-heading h1 { font-size:32px; }
+.page-heading p { font-size:14px; line-height:1.55; }
+.eyebrow { font-size:11px; }
+.btn { min-height:42px; font-size:13px; }
+.btn.compact { font-size:12px; }
+.saved-profiles button { font-size:12px; padding:8px 11px; }
+.section-title h2 { font-size:15px; }
+.section-title small { font-size:11px; }
+.chip-grid button,.source-list button { font-size:11.5px; padding:8px 11px; }
+.search-summary h2 { font-size:18px; }
+.search-summary label { font-size:12px; }
+.search-summary select,.search-summary textarea { font-size:12px; }
+.summary-metrics strong { font-size:22px; }
+.summary-metrics span { font-size:10.5px; }
+.custom-entry input,.custom-entry button { font-size:12px; }
+.search-heading-actions { flex-wrap:nowrap; }
+.reset-search-btn { color:var(--danger); border-color:#efcaca; background:#fffafa; }
+.reset-search-btn:hover { color:#b83838; border-color:#e9aaaa; background:#fff3f3; }
+.app-shell.dark .reset-search-btn { background:color-mix(in srgb,var(--card) 85%,#5a2020); border-color:#704040; color:#ffb5b5; }
+@media (max-width:720px) {
+  .page-heading h1 { font-size:28px; }
+  .search-heading-actions { flex-wrap:wrap; }
+}
+'''
+          css_path.write_text(css, encoding='utf-8')
+          PY
+
+      - name: Verify changes
+        shell: bash
+        run: |
+          grep -q 'Reset Search' app/job-hunter.tsx
+          grep -q 'resetSearch={() =>' app/job-hunter.tsx
+          grep -q 'Screenshot-ready typography polish' app/globals.css
+          grep -q 'family=Tajawal' app/globals.css
+
+      - name: Commit source update
+        shell: bash
+        run: |
+          rm .github/workflows/one-shot-polish-search-ui.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "feat: add search reset and polish UI typography"
+          git push origin main
