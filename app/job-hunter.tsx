@@ -10,6 +10,7 @@ import {
   Sparkles, Sun, Target, Trash2, Upload, UsersRound, X,
 } from "lucide-react";
 import { applicationsToCsv, dataToExcelXml, excelXmlToData } from "./data-transfer";
+import { downloadCompanyTemplate, readCompanyWorkbook } from "./company-transfer";
 import { EditionConfig, formatLimit, getTierPolicy, hasReachedLimit, nextTierLabel, tierLabel } from "./tier-policy";
 
 type Page = "dashboard" | "search" | "applications" | "companies" | "history" | "settings";
@@ -68,7 +69,7 @@ const SEARCH_SITES = [
 const DEFAULT_COMPANIES: Company[] = [
   { id: "c1", name: "National Plastic Factory (NPF)", country: "Saudi Arabia", website: "https://npfco.com.sa/%D8%A7%D9%84%D8%AA%D9%88%D8%B8%D9%8A%D9%81/", notes: "Direct careers page", favorite: true },
   { id: "c2", name: "Neproplast", country: "Saudi Arabia", website: "https://neproplast.com/careers/", notes: "Careers portal", favorite: true },
-  { id: "c3", name: "Muna Noor Manufacturing", country: "Oman", website: "https://www.munanoor.com/", notes: "Search company careers", favorite: true },
+  { id: "c3", name: "Muna Noor Manufacturing", country: "Oman", website: "https://www.munanoor.com/careers/", notes: "Direct careers page", favorite: true },
   { id: "c4", name: "Al Sulaiteen Group", country: "Qatar", website: "https://alsulaiteengroup.com/", notes: "Target company", favorite: false },
 ];
 const DEFAULT_EDITION: EditionConfig = { edition: "personal", tier: "premium", showPlastics: true, defaultMode: "plastics", auth: false, displayName: "Khaled Taha", buyUrl: "" };
@@ -85,7 +86,7 @@ const EN = {
   field: "Career field", titles: "Job titles", keywords: "Industry keywords", countries: "Target countries", sources: "Search sources", period: "Date posted", preview: "Search preview",
   appTitle: "Applications tracker", appSub: "Keep every opportunity, deadline, and next step in one place.", all: "All", new: "New", interested: "Interested", applied: "Applied", interview: "Interview", offer: "Offer", rejected: "Rejected",
   company: "Company", role: "Role", country: "Country", date: "Date", status: "Status", actions: "Actions", followUp: "Follow-up", notes: "Notes", link: "Job link",
-  targetCompanies: "Target companies", companySub: "Build a focused list of employers worth checking directly.", addCompany: "Add company", visit: "Visit website",
+  targetCompanies: "Target companies", companySub: "Build a focused list of employers worth checking directly.", addCompany: "Add company", visit: "Visit Careers Page", downloadCompaniesTemplate: "Download Template", importCompanies: "Import Excel", careersPage: "Careers Page URL",
   settingsTitle: "Product settings", appearance: "Appearance", language: "Language", data: "Data & transfer", export: "Export", import: "Import", reset: "Reset all data",
   light: "Light", dark: "Dark", english: "English", arabic: "العربية", emptyHistory: "No searches yet", searches: "searches", profileName: "Profile name", save: "Save", cancel: "Cancel", delete: "Delete",
 };
@@ -97,7 +98,7 @@ const AR: typeof EN = {
   field: "المجال الوظيفي", titles: "المسميات الوظيفية", keywords: "كلمات المجال", countries: "الدول المستهدفة", sources: "مصادر البحث", period: "تاريخ النشر", preview: "معاينة البحث",
   appTitle: "متابعة طلبات التوظيف", appSub: "اجمع كل فرصة وموعد وخطوة تالية في مكان واحد.", all: "الكل", new: "جديدة", interested: "مهتم", applied: "تم التقديم", interview: "مقابلة", offer: "عرض", rejected: "مرفوضة",
   company: "الشركة", role: "الوظيفة", country: "الدولة", date: "التاريخ", status: "الحالة", actions: "إجراءات", followUp: "المتابعة", notes: "ملاحظات", link: "رابط الوظيفة",
-  targetCompanies: "الشركات المستهدفة", companySub: "كوّن قائمة بالشركات التي تستحق المتابعة المباشرة.", addCompany: "إضافة شركة", visit: "فتح الموقع",
+  targetCompanies: "الشركات المستهدفة", companySub: "كوّن قائمة بالشركات التي تستحق المتابعة المباشرة.", addCompany: "إضافة شركة", visit: "فتح صفحة التوظيف", downloadCompaniesTemplate: "تحميل النموذج", importCompanies: "استيراد Excel", careersPage: "رابط صفحة التوظيف",
   settingsTitle: "إعدادات التطبيق", appearance: "المظهر", language: "اللغة", data: "البيانات والنقل", export: "تصدير", import: "استيراد", reset: "مسح كل البيانات",
   light: "فاتح", dark: "داكن", english: "English", arabic: "العربية", emptyHistory: "لا يوجد بحث سابق", searches: "عمليات بحث", profileName: "اسم الإعداد", save: "حفظ", cancel: "إلغاء", delete: "حذف",
 };
@@ -147,6 +148,7 @@ export default function JobHunter() {
   const [serverUser, setServerUser] = useState<ServerUser | null>(null);
   const [serverLoaded, setServerLoaded] = useState(false);
   const excelImportRef = useRef<HTMLInputElement>(null);
+  const companyImportRef = useRef<HTMLInputElement>(null);
   const backupImportRef = useRef<HTMLInputElement>(null);
   const t = language === "ar" ? AR : EN;
   const displayName = serverUser?.fullName || EDITION.displayName || "Job Seeker";
@@ -305,6 +307,23 @@ export default function JobHunter() {
     };
     reader.readAsText(file);
   };
+  const importCompanyWorkbook = async (file?: File) => {
+    if (!file) return;
+    if (!POLICY.excelTransfer) return showUpgrade("Excel company import requires the Premium plan.");
+    try {
+      const imported = await readCompanyWorkbook(file);
+      const incoming = imported.map(row => ({ id: makeId(), name: row.name, country: row.country, website: row.website, notes: row.notes, favorite: true }));
+      setCompanies(current => {
+        const merged = new Map<string, Company>();
+        current.forEach(company => merged.set((company.website || `${company.name}|${company.country}`).trim().toLowerCase(), company));
+        incoming.forEach(company => merged.set((company.website || `${company.name}|${company.country}`).trim().toLowerCase(), company));
+        return Array.from(merged.values());
+      });
+      alert(`${incoming.length} companies imported successfully.`);
+    } catch (issue) {
+      alert(issue instanceof Error ? issue.message : "Unable to import the company workbook.");
+    }
+  };
   const exportDatabaseBackup = async () => {
     if (!POLICY.databaseBackup) return showUpgrade("Database backup requires the Premium plan.");
     if (serverStatus === "online") {
@@ -372,13 +391,14 @@ export default function JobHunter() {
           {page === "dashboard" && <Dashboard t={t} firstName={firstName} counts={counts} dueFollowUps={dueFollowUps.length} profileCount={profiles.length} applications={applications} advanced={POLICY.advancedTracker} onSearch={() => setPage("search")} onAdd={() => openApplication()} />}
           {page === "search" && <SearchWorkspace t={t} policy={POLICY} upgrade={showUpgrade} mode={mode} field={field} setField={setField} jobs={jobs} setJobs={setJobs} keywords={keywords} setKeywords={setKeywords} countries={countries} setCountries={setCountries} sites={sites} setSites={setSites} period={period} setPeriod={setPeriod} query={query} toggle={toggle} runSearch={runSearch} profiles={profiles} loadProfile={(p: Profile) => { setMode(p.field === "Plastics & Manufacturing" && EDITION.showPlastics ? "plastics" : "general"); if (p.field !== "Plastics & Manufacturing") setField(FIELDS[p.field] ? p.field : "Custom / Other"); setJobs(p.jobs); setKeywords(p.keywords); setCountries(p.countries); setSites(p.sites.filter(id => SEARCH_SITES.slice(0, allowedSiteCount).some(source => source.id === id))); }} openProfile={openProfile} />}
           {page === "applications" && <ApplicationsPage t={t} applications={filteredApps} statuses={allowedStatuses} filter={statusFilter} setFilter={setStatusFilter} searchText={searchText} setSearchText={setSearchText} edit={(a: Application) => openApplication(a)} remove={(id: string) => confirm("Delete this application?") && setApplications(list => list.filter(a => a.id !== id))} changeStatus={(id: string, status: Status) => allowedStatuses.includes(status) && setApplications(list => list.map(a => a.id === id ? { ...a, status } : a))} add={() => openApplication()} />}
-          {page === "companies" && (POLICY.targetCompanies ? <CompaniesPage t={t} companies={companies} add={() => setCompanyModal(true)} remove={(id: string) => setCompanies(list => list.filter(c => c.id !== id))} toggleFavorite={(id: string) => setCompanies(list => list.map(c => c.id === id ? { ...c, favorite: !c.favorite } : c))} /> : <LockedPage title={t.targetCompanies} badge="STANDARD" text="Target-company tracking starts with the Standard plan." upgrade={showUpgrade} />)}
+          {page === "companies" && (POLICY.targetCompanies ? <CompaniesPage t={t} companies={companies} add={() => setCompanyModal(true)} remove={(id: string) => setCompanies(list => list.filter(c => c.id !== id))} toggleFavorite={(id: string) => setCompanies(list => list.map(c => c.id === id ? { ...c, favorite: !c.favorite } : c))} excelTransfer={POLICY.excelTransfer} downloadTemplate={downloadCompanyTemplate} importExcel={() => companyImportRef.current?.click()} upgrade={showUpgrade} /> : <LockedPage title={t.targetCompanies} badge="STANDARD" text="Target-company tracking starts with the Standard plan." upgrade={showUpgrade} />)}
           {page === "history" && <HistoryPage t={t} history={searchHistory} rerun={(entry: SearchEntry) => { setPage("search"); navigator.clipboard?.writeText(entry.query); }} clear={() => confirm("Clear search history?") && setSearchHistory([])} />}
           {page === "settings" && <SettingsPage t={t} edition={EDITION} policy={POLICY} upgrade={showUpgrade} dark={dark} setDark={setDark} language={language} setLanguage={setLanguage} exportCsv={exportCsv} exportExcel={exportExcel} importExcel={() => excelImportRef.current?.click()} exportBackup={exportDatabaseBackup} importBackup={() => backupImportRef.current?.click()} reset={() => { if (confirm("This will delete all saved data. Continue?")) { setApplications([]); setCompanies(INITIAL_COMPANIES); setSearchHistory([]); setProfiles([]); } }} />}
         </div>
       </main>
 
       <input ref={excelImportRef} hidden type="file" accept=".xml,text/xml,application/xml,application/vnd.ms-excel" onChange={e => { importExcel(e.target.files?.[0]); e.currentTarget.value = ""; }} />
+      <input ref={companyImportRef} hidden type="file" accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" onChange={e => { importCompanyWorkbook(e.target.files?.[0]); e.currentTarget.value = ""; }} />
       <input ref={backupImportRef} hidden type="file" accept="application/json,.json" onChange={e => { restoreDatabaseBackup(e.target.files?.[0]); e.currentTarget.value = ""; }} />
       {appModal && <ApplicationModal t={t} app={editingApp} statuses={allowedStatuses} followUps={POLICY.followUps} close={() => { setAppModal(false); setEditingApp(null); }} save={saveApplication} />}
       {companyModal && <CompanyModal t={t} close={() => setCompanyModal(false)} save={form => { setCompanies(list => [{ id: makeId(), name: String(form.get("name")), country: String(form.get("country")), website: String(form.get("website")), notes: String(form.get("notes")), favorite: true }, ...list]); setCompanyModal(false); }} />}
@@ -431,8 +451,9 @@ function ApplicationsPage({ t, applications, statuses, filter, setFilter, search
   return <><PageHeading title={t.appTitle} text={t.appSub} action={<button className="btn primary" onClick={add}><Plus size={18} />{t.add}</button>} /><div className="list-toolbar"><div className="search-box"><Search size={18} /><input value={searchText} onChange={e => setSearchText(e.target.value)} placeholder="Search company, role or country…" /></div><div className="filter-pills">{filters.map(s => <button className={filter === s ? "active" : ""} key={s} onClick={() => setFilter(s)}>{t[s]}</button>)}</div></div><section className="panel table-panel">{applications.length ? <div className="application-table"><div className="table-head"><span>{t.role}</span><span>{t.company}</span><span>{t.country}</span><span>{t.date}</span><span>{t.status}</span><span>{t.actions}</span></div>{applications.map((a: Application) => <div className="table-row" key={a.id}><div><strong>{a.title}</strong>{a.link && <a href={a.link} target="_blank" rel="noreferrer">Open job <ExternalLink size={12} /></a>}{a.followUp && <small className="followup-inline"><Clock3 size={11} />{a.followUp}</small>}</div><span>{a.company}</span><span>{a.country || "—"}</span><span>{a.date}</span><select className={`status-select ${a.status}`} value={a.status} onChange={e => changeStatus(a.id, e.target.value)}>{statuses.map((s: Status) => <option key={s} value={s}>{t[s]}</option>)}</select><div className="row-actions"><button className="icon-btn" onClick={() => edit(a)} aria-label="Edit"><Pencil size={16} /></button><button className="icon-btn danger" onClick={() => remove(a.id)} aria-label="Delete"><Trash2 size={16} /></button></div></div>)}</div> : <EmptyState icon={BriefcaseBusiness} title={t.noApps} text={t.noAppsSub} action={<button className="btn primary" onClick={add}><Plus size={17} />{t.add}</button>} />}</section></>;
 }
 
-function CompaniesPage({ t, companies, add, remove, toggleFavorite }: any) {
-  return <><PageHeading title={t.targetCompanies} text={t.companySub} action={<button className="btn primary" onClick={add}><Plus size={18} />{t.addCompany}</button>} /><section className="company-grid">{companies.length === 0 ? <article className="panel company-empty"><EmptyState icon={Building2} title="No target companies yet" text="Add companies you want to monitor directly." /></article> : companies.map((c: Company) => <article className="panel company-tile" key={c.id}><div className="company-logo">{c.name.split(/\s+/).slice(0, 2).map(w => w[0]).join("")}</div><div className="company-copy"><div><h3>{c.name}</h3><span><Globe2 size={14} />{c.country}</span></div><p>{c.notes || "Target employer"}</p><div className="company-actions">{c.website && <a className="btn secondary compact" href={c.website} target="_blank" rel="noreferrer">{t.visit}<ExternalLink size={14} /></a>}<button className={`icon-btn ${c.favorite ? "favorite" : ""}`} onClick={() => toggleFavorite(c.id)} aria-label="Favorite"><Target size={17} /></button><button className="icon-btn danger" onClick={() => remove(c.id)} aria-label="Delete"><Trash2 size={16} /></button></div></div></article>)}</section></>;
+function CompaniesPage({ t, companies, add, remove, toggleFavorite, excelTransfer, downloadTemplate, importExcel, upgrade }: any) {
+  const actions = <div className="button-row">{excelTransfer ? <><button className="btn secondary" onClick={downloadTemplate}><Download size={17} />{t.downloadCompaniesTemplate}</button><button className="btn secondary" onClick={importExcel}><Upload size={17} />{t.importCompanies}</button></> : <button className="btn secondary locked-action" onClick={() => upgrade("Excel company import requires the Premium plan.")}><Lock size={16} />Excel · Premium</button>}<button className="btn primary" onClick={add}><Plus size={18} />{t.addCompany}</button></div>;
+  return <><PageHeading title={t.targetCompanies} text={t.companySub} action={actions} /><section className="company-grid">{companies.length === 0 ? <article className="panel company-empty"><EmptyState icon={Building2} title="No target companies yet" text="Add companies you want to monitor directly." /></article> : companies.map((c: Company) => <article className="panel company-tile" key={c.id}><div className="company-logo">{c.name.split(/\s+/).slice(0, 2).map(w => w[0]).join("")}</div><div className="company-copy"><div><h3>{c.name}</h3><span><Globe2 size={14} />{c.country}</span></div><p>{c.notes || "Target employer"}</p><div className="company-actions">{c.website && <a className="btn secondary compact" href={c.website} target="_blank" rel="noreferrer">{t.visit}<ExternalLink size={14} /></a>}<button className={`icon-btn ${c.favorite ? "favorite" : ""}`} onClick={() => toggleFavorite(c.id)} aria-label="Favorite"><Target size={17} /></button><button className="icon-btn danger" onClick={() => remove(c.id)} aria-label="Delete"><Trash2 size={16} /></button></div></div></article>)}</section></>;
 }
 
 function HistoryPage({ t, history, rerun, clear }: any) {
@@ -480,4 +501,4 @@ function LoginScreen({ onLogin }: { onLogin: (user: ServerUser) => void }) {
 
 function SimpleModal({ title, close, children }: { title: string; close: () => void; children: React.ReactNode }) { return <div className="modal-backdrop" onMouseDown={e => e.target === e.currentTarget && close()}><section className="modal"><header><h2>{title}</h2><button className="icon-btn" onClick={close}><X size={20} /></button></header>{children}</section></div>; }
 function ApplicationModal({ t, app, statuses, followUps, close, save }: { t: typeof EN; app: Application | null; statuses: Status[]; followUps: boolean; close: () => void; save: (form: FormData) => void }) { return <SimpleModal title={app ? "Edit application" : t.add} close={close}><form action={save}><div className="form-grid"><label className="span-2">{t.role}<input name="title" defaultValue={app?.title} required autoFocus /></label><label>{t.company}<input name="company" defaultValue={app?.company} required /></label><label>{t.country}<input name="country" defaultValue={app?.country} /></label><label>{t.status}<select name="status" defaultValue={statuses.includes(app?.status as Status) ? app?.status : "new"}>{statuses.map(s => <option value={s} key={s}>{t[s]}</option>)}</select></label><label>{t.date}<input type="date" name="date" defaultValue={app?.date || today()} /></label>{followUps && <label>{t.followUp}<input type="date" name="followUp" defaultValue={app?.followUp} /></label>}<label className="span-2">{t.link}<input type="url" name="link" defaultValue={app?.link} placeholder="https://…" /></label><label className="span-2">{t.notes}<textarea name="notes" defaultValue={app?.notes} /></label></div><div className="modal-actions"><button type="button" className="btn secondary" onClick={close}>{t.cancel}</button><button className="btn primary">{t.save}</button></div></form></SimpleModal>; }
-function CompanyModal({ t, close, save }: { t: typeof EN; close: () => void; save: (form: FormData) => void }) { return <SimpleModal title={t.addCompany} close={close}><form action={save}><div className="form-grid"><label className="span-2">{t.company}<input name="name" required autoFocus /></label><label>{t.country}<input name="country" /></label><label>Website<input name="website" type="url" placeholder="https://…" /></label><label className="span-2">{t.notes}<textarea name="notes" /></label></div><div className="modal-actions"><button type="button" className="btn secondary" onClick={close}>{t.cancel}</button><button className="btn primary">{t.save}</button></div></form></SimpleModal>; }
+function CompanyModal({ t, close, save }: { t: typeof EN; close: () => void; save: (form: FormData) => void }) { return <SimpleModal title={t.addCompany} close={close}><form action={save}><div className="form-grid"><label className="span-2">{t.company}<input name="name" required autoFocus /></label><label>{t.country}<input name="country" /></label><label>{t.careersPage}<input name="website" type="url" placeholder="https://company.com/careers/" /></label><label className="span-2">{t.notes}<textarea name="notes" /></label></div><div className="modal-actions"><button type="button" className="btn secondary" onClick={close}>{t.cancel}</button><button className="btn primary">{t.save}</button></div></form></SimpleModal>; }
