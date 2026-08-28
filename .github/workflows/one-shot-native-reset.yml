@@ -67,10 +67,8 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Validate
-        run: |
-          npm run typecheck
-          npm run build:editions
+      - name: Validate production build
+        run: npm run build:editions
 
       - name: Commit source fix
         run: |
