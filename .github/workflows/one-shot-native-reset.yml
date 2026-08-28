@@ -1,0 +1,82 @@
+name: One-shot Native Search Reset
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/one-shot-native-reset.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Apply native React reset and remove script injection
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path('app/job-hunter.tsx')
+          text = path.read_text(encoding='utf-8')
+
+          old_en = 'subtitle: "Your focused job-search workspace", plastics: "My Plastics Profile", general: "All Career Fields", add: "Add application", run: "Run search", saveProfile: "Save profile",'
+          new_en = 'subtitle: "Your focused job-search workspace", plastics: "My Plastics Profile", general: "All Career Fields", add: "Add application", run: "Run search", saveProfile: "Save profile", resetSearch: "Reset Search",'
+          if old_en not in text:
+              raise SystemExit('English translation anchor not found')
+          text = text.replace(old_en, new_en, 1)
+
+          old_ar = 'subtitle: "مساحة منظمة للبحث عن الوظائف", plastics: "مجالي: البلاستيك", general: "كل المجالات", add: "إضافة وظيفة", run: "تشغيل البحث", saveProfile: "حفظ الإعداد",'
+          new_ar = 'subtitle: "\u0645\u0633\u0627\u062d\u0629 \u0645\u0646\u0638\u0645\u0629 \u0644\u0644\u0628\u062d\u062b \u0639\u0646 \u0627\u0644\u0648\u0638\u0627\u0626\u0641", plastics: "\u0645\u062c\u0627\u0644\u064a: \u0627\u0644\u0628\u0644\u0627\u0633\u062a\u064a\u0643", general: "\u0643\u0644 \u0627\u0644\u0645\u062c\u0627\u0644\u0627\u062a", add: "\u0625\u0636\u0627\u0641\u0629 \u0648\u0638\u064a\u0641\u0629", run: "\u062a\u0634\u063a\u064a\u0644 \u0627\u0644\u0628\u062d\u062b", saveProfile: "\u062d\u0641\u0638 \u0627\u0644\u0625\u0639\u062f\u0627\u062f", resetSearch: "\u0625\u0639\u0627\u062f\u0629 \u0636\u0628\u0637 \u0627\u0644\u0628\u062d\u062b",'
+          if old_ar not in text:
+              raise SystemExit('Arabic translation anchor not found')
+          text = text.replace(old_ar, new_ar, 1)
+
+          old_action = 'action={<button className="btn secondary" onClick={openProfile}><Plus size={17} />{t.saveProfile}</button>} />'
+          new_action = 'action={<div className="search-heading-actions"><button className="btn secondary reset-search-button" onClick={() => { setJobs([]); setKeywords([]); setCountries([]); setSites([]); setPeriod("all"); }}><X size={17} />{t.resetSearch}</button><button className="btn secondary" onClick={openProfile}><Plus size={17} />{t.saveProfile}</button></div>} />'
+          if old_action not in text:
+              raise SystemExit('Search heading action anchor not found')
+          text = text.replace(old_action, new_action, 1)
+          path.write_text(text, encoding='utf-8')
+
+          index = Path('hostinger/index.html')
+          html = index.read_text(encoding='utf-8')
+          html = html.replace('    <script defer src="./polish.js"></script>\n', '')
+          index.write_text(html, encoding='utf-8')
+
+          css = Path('hostinger/public/polish.css')
+          style = css.read_text(encoding='utf-8')
+          style += '''\n\n.search-heading-actions { display: inline-flex; align-items: center; gap: 12px; flex-wrap: wrap; }\n.reset-search-button { border-color: #c9d4e8; color: #51627e; background: #fff; }\n.reset-search-button:hover { border-color: #9fb4dc; color: #2855d9; background: #f7f9ff; }\n.app-shell.rtl .search-heading-actions { flex-direction: row-reverse; }\nbody { font-size: 16px; }\n.page-heading h1 { font-size: 38px; }\n.page-heading p { font-size: 16px; }\n.section-title h2 { font-size: 17px; }\n.chip-grid button, .source-list button { font-size: 13px; padding: 10px 13px; }\n.custom-entry input, .custom-entry button { font-size: 13.5px; min-height: 45px; }\n.nav-list button { font-size: 16px; }\n.search-summary label { font-size: 13.5px; }\n@media (max-width: 720px) { .page-heading h1 { font-size: 32px; } }\n'''
+          css.write_text(style, encoding='utf-8')
+
+      - name: Remove legacy polish script
+        run: rm -f hostinger/public/polish.js
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Validate
+        run: |
+          npm run typecheck
+          npm run build:editions
+
+      - name: Commit source fix
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/job-hunter.tsx hostinger/index.html hostinger/public/polish.css hostinger/public/polish.js
+          git commit -m "fix: add native search reset and polish search UI"
+          git push origin main
