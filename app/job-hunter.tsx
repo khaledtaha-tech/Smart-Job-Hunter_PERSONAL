@@ -80,7 +80,7 @@ const safeMode = (value?: Mode): Mode => value === "plastics" && !EDITION.showPl
 
 const EN = {
   dashboard: "Dashboard", search: "Job Search", applications: "Applications", companies: "Companies", history: "Search History", settings: "Settings",
-  subtitle: "Your focused job-search workspace", plastics: "My Plastics Profile", general: "All Career Fields", add: "Add application", run: "Run search", saveProfile: "Save profile",
+  subtitle: "Your focused job-search workspace", plastics: "My Plastics Profile", general: "All Career Fields", add: "Add application", run: "Run search", saveProfile: "Save profile", resetSearch: "Reset Search",
   welcome: "Good morning", welcomeSub: "Here is where your job search stands today.", total: "Total applications", interviews: "Interviews", offers: "Offers", followups: "Follow-ups due", profiles: "Career profiles",
   pipeline: "Application pipeline", recent: "Recent applications", noApps: "No applications yet", noAppsSub: "Save the first opportunity you find and track it here.", openSearch: "Start focused search",
   field: "Career field", titles: "Job titles", keywords: "Industry keywords", countries: "Target countries", sources: "Search sources", period: "Date posted", preview: "Search preview",
@@ -92,7 +92,7 @@ const EN = {
 };
 const AR: typeof EN = {
   dashboard: "لوحة المتابعة", search: "البحث عن وظائف", applications: "طلبات التوظيف", companies: "الشركات", history: "سجل البحث", settings: "الإعدادات",
-  subtitle: "مساحة منظمة للبحث عن الوظائف", plastics: "مجالي: البلاستيك", general: "كل المجالات", add: "إضافة وظيفة", run: "تشغيل البحث", saveProfile: "حفظ الإعداد",
+  subtitle: "مساحة منظمة للبحث عن الوظائف", plastics: "مجالي: البلاستيك", general: "كل المجالات", add: "إضافة وظيفة", run: "تشغيل البحث", saveProfile: "حفظ الإعداد", resetSearch: "إعادة ضبط البحث",
   welcome: "صباح الخير", welcomeSub: "هذا ملخص رحلة البحث عن الوظيفة اليوم.", total: "إجمالي الطلبات", interviews: "المقابلات", offers: "العروض", followups: "متابعات مستحقة", profiles: "الملفات المهنية",
   pipeline: "مراحل التقديم", recent: "أحدث الطلبات", noApps: "لا توجد طلبات حتى الآن", noAppsSub: "احفظ أول فرصة مناسبة وتابعها من هنا.", openSearch: "ابدأ بحثًا مركزًا",
   field: "المجال الوظيفي", titles: "المسميات الوظيفية", keywords: "كلمات المجال", countries: "الدول المستهدفة", sources: "مصادر البحث", period: "تاريخ النشر", preview: "معاينة البحث",
@@ -435,7 +435,7 @@ function SearchWorkspace(props: any) {
   const allowedSiteCount = policy.maxSearchSites ?? SEARCH_SITES.length;
   const addCustom = (value: string, list: string[], setter: (items: string[]) => void) => { const clean = value.trim(); if (clean && !list.includes(clean)) setter([...list, clean]); };
   return <>
-    <PageHeading eyebrow={mode === "plastics" ? "PLASTICS & MANUFACTURING" : "UNIVERSAL SEARCH"} title={t.search} text={mode === "plastics" ? "A focused profile built for production leadership across plastics manufacturing." : "Choose any career field, add your own titles and keywords, and build a precise search in seconds."} action={<button className="btn secondary" onClick={openProfile}><Plus size={17} />{t.saveProfile}</button>} />
+    <PageHeading eyebrow={mode === "plastics" ? "PLASTICS & MANUFACTURING" : "UNIVERSAL SEARCH"} title={t.search} text={mode === "plastics" ? "A focused profile built for production leadership across plastics manufacturing." : "Choose any career field, add your own titles and keywords, and build a precise search in seconds."} action={<div className="search-heading-actions"><button className="btn secondary reset-search-button" onClick={() => { setJobs([]); setKeywords([]); setCountries([]); setSites([]); setPeriod("all"); }}><X size={17} />{t.resetSearch}</button><button className="btn secondary" onClick={openProfile}><Plus size={17} />{t.saveProfile}</button></div>} />
     {profiles.length > 0 && <div className="saved-profiles">{profiles.map((p: Profile) => <button key={p.id} onClick={() => loadProfile(p)}><Target size={15} />{p.name}</button>)}</div>}
     <section className="search-layout"><div className="search-config">
       {mode === "general" && <article className="panel config-card"><SectionTitle step="1" title={t.field} /><select value={field} onChange={e => { const next = e.target.value; setField(next); setJobs(FIELDS[next].jobs.slice(0, 3)); setKeywords(FIELDS[next].keywords.slice(0, 3)); }}>{Object.keys(FIELDS).map(name => <option key={name}>{name}</option>)}</select></article>}

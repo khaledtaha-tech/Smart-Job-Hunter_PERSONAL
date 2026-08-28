@@ -73,3 +73,18 @@ body {
   .page-heading h1 { font-size: 32px; }
   .sjh-search-heading-actions { flex-wrap: wrap; }
 }
+
+
+.search-heading-actions { display: inline-flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.reset-search-button { border-color: #c9d4e8; color: #51627e; background: #fff; }
+.reset-search-button:hover { border-color: #9fb4dc; color: #2855d9; background: #f7f9ff; }
+.app-shell.rtl .search-heading-actions { flex-direction: row-reverse; }
+body { font-size: 16px; }
+.page-heading h1 { font-size: 38px; }
+.page-heading p { font-size: 16px; }
+.section-title h2 { font-size: 17px; }
+.chip-grid button, .source-list button { font-size: 13px; padding: 10px 13px; }
+.custom-entry input, .custom-entry button { font-size: 13.5px; min-height: 45px; }
+.nav-list button { font-size: 16px; }
+.search-summary label { font-size: 13.5px; }
+@media (max-width: 720px) { .page-heading h1 { font-size: 32px; } }
