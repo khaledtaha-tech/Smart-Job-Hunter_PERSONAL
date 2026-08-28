@@ -1,0 +1,68 @@
+name: One-shot Search Reset Update
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/one-shot-add-reset-search.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Add Reset Search
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('app/job-hunter.tsx')
+          s = p.read_text(encoding='utf-8')
+
+          old = 'subtitle: "Your focused job-search workspace", plastics: "My Plastics Profile", general: "All Career Fields", add: "Add application", run: "Run search", saveProfile: "Save profile",'
+          new = 'subtitle: "Your focused job-search workspace", plastics: "My Plastics Profile", general: "All Career Fields", add: "Add application", run: "Run search", saveProfile: "Save profile", resetSearch: "Reset Search",'
+          assert old in s
+          s = s.replace(old, new, 1)
+
+          old = 'subtitle: "مساحة منظمة للبحث عن الوظائف", plastics: "مجالي: البلاستيك", general: "كل المجالات", add: "إضافة وظيفة", run: "تشغيل البحث", saveProfile: "حفظ الإعداد",'
+          new = 'subtitle: "مساحة منظمة للبحث عن الوظائف", plastics: "مجالي: البلاستيك", general: "كل المجالات", add: "إضافة وظيفة", run: "تشغيل البحث", saveProfile: "حفظ الإعداد", resetSearch: "إعادة ضبط البحث",'
+          assert old in s
+          s = s.replace(old, new, 1)
+
+          old = '  const openProfile = () => {\n    if (hasReachedLimit(profiles.length, POLICY.maxProfiles)) return showUpgrade(`Your ${planName} plan allows up to ${formatLimit(POLICY.maxProfiles)} career profiles.`);\n    setProfileModal(true);\n  };'
+          new = old + '\n  const resetSearch = () => {\n    setField("Engineering & Manufacturing");\n    setJobs([]);\n    setKeywords([]);\n    setCountries([]);\n    setSites([]);\n    setPeriod("all");\n  };'
+          assert old in s
+          s = s.replace(old, new, 1)
+
+          old = 'loadProfile={(p: Profile) => { setMode(p.field === "Plastics & Manufacturing" && EDITION.showPlastics ? "plastics" : "general"); if (p.field !== "Plastics & Manufacturing") setField(FIELDS[p.field] ? p.field : "Custom / Other"); setJobs(p.jobs); setKeywords(p.keywords); setCountries(p.countries); setSites(p.sites.filter(id => SEARCH_SITES.slice(0, allowedSiteCount).some(source => source.id === id))); }} openProfile={openProfile} />}'
+          new = 'loadProfile={(p: Profile) => { setMode(p.field === "Plastics & Manufacturing" && EDITION.showPlastics ? "plastics" : "general"); if (p.field !== "Plastics & Manufacturing") setField(FIELDS[p.field] ? p.field : "Custom / Other"); setJobs(p.jobs); setKeywords(p.keywords); setCountries(p.countries); setSites(p.sites.filter(id => SEARCH_SITES.slice(0, allowedSiteCount).some(source => source.id === id))); }} openProfile={openProfile} resetSearch={resetSearch} />}'
+          assert old in s
+          s = s.replace(old, new, 1)
+
+          old = 'const { t, policy, upgrade, mode, field, setField, jobs, setJobs, keywords, setKeywords, countries, setCountries, sites, setSites, period, setPeriod, query, toggle, runSearch, profiles, loadProfile, openProfile } = props;'
+          new = 'const { t, policy, upgrade, mode, field, setField, jobs, setJobs, keywords, setKeywords, countries, setCountries, sites, setSites, period, setPeriod, query, toggle, runSearch, profiles, loadProfile, openProfile, resetSearch } = props;'
+          assert old in s
+          s = s.replace(old, new, 1)
+
+          old = 'action={<button className="btn secondary" onClick={openProfile}><Plus size={17} />{t.saveProfile}</button>} />'
+          new = 'action={<div className="button-row"><button className="btn secondary" onClick={resetSearch}>{t.resetSearch}</button><button className="btn secondary" onClick={openProfile}><Plus size={17} />{t.saveProfile}</button></div>} />'
+          assert old in s
+          s = s.replace(old, new, 1)
+
+          p.write_text(s, encoding='utf-8')
+          Path('.github/workflows/one-shot-add-reset-search.yml').unlink()
+      - name: Verify build
+        run: |
+          npm ci
+          npm run build
+      - name: Commit update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/job-hunter.tsx .github/workflows/one-shot-add-reset-search.yml
+          git commit -m "feat: add reset search action"
+          git push origin main
