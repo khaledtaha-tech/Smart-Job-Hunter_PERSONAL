@@ -27,18 +27,13 @@ jobs:
           path = Path('app/job-hunter.tsx')
           text = path.read_text(encoding='utf-8')
           old = '<span className={`plan-badge ${EDITION.tier}`}>{EDITION.edition === "personal" ? <Sparkles size={13} /> : <Crown size={13} />}{planName}</span>\n            <button className="icon-btn" onClick={() => setDark(v => !v)} aria-label="Toggle theme">'
-          new = '<span className={`plan-badge ${EDITION.tier}`}>{EDITION.edition === "personal" ? <Sparkles size={13} /> : <Crown size={13} />}{planName}</span>\n            <button className="language-toggle" onClick={() => setLanguage(value => value === "en" ? "ar" : "en")} aria-label="Toggle language">{language === "en" ? "AR" : "EN"}</button>\n            <button className="icon-btn" onClick={() => setDark(v => !v)} aria-label="Toggle theme">'
+          new = '<span className={`plan-badge ${EDITION.tier}`}>{EDITION.edition === "personal" ? <Sparkles size={13} /> : <Crown size={13} />}{planName}</span>\n            <button className="btn secondary" onClick={() => setLanguage(value => value === "en" ? "ar" : "en")} aria-label="Toggle language">{language === "en" ? "AR" : "EN"}</button>\n            <button className="icon-btn" onClick={() => setDark(v => !v)} aria-label="Toggle theme">'
           if old not in text:
+              if 'aria-label="Toggle language"' in text:
+                  raise SystemExit(0)
               raise SystemExit('Topbar anchor not found')
           text = text.replace(old, new, 1)
           path.write_text(text, encoding='utf-8')
-
-          css = Path('hostinger/app.css')
-          style = css.read_text(encoding='utf-8')
-          marker = '.language-toggle {'
-          if marker not in style:
-              style += '''\n\n.language-toggle {\n  min-width: 46px;\n  height: 42px;\n  padding: 0 12px;\n  border: 1px solid var(--border);\n  border-radius: 12px;\n  background: var(--card);\n  color: var(--text);\n  font: inherit;\n  font-size: 13px;\n  font-weight: 800;\n  cursor: pointer;\n  transition: 160ms ease;\n}\n.language-toggle:hover {\n  border-color: #a9bce8;\n  background: #f5f8ff;\n  color: #2e63df;\n}\n.dark .language-toggle:hover {\n  background: rgba(255,255,255,.06);\n}\n'''
-              css.write_text(style, encoding='utf-8')
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -73,14 +68,14 @@ jobs:
               'tier' => 'premium',
           ];
           EOF
-          sed -i 's#./edition-config.js#./edition-config.js?v=commercial-lang-20260902#g' "$demo/index.html"
+          sed -i 's#./edition-config.js#./edition-config.js?v=commercial-lang-20260902b#g' "$demo/index.html"
 
       - name: Commit source change
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add app/job-hunter.tsx hostinger/app.css
+          git add app/job-hunter.tsx
           git commit -m "feat: add AR EN language toggle" || true
           git push origin HEAD:main
 
