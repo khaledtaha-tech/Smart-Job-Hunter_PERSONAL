@@ -52,6 +52,97 @@ const FIELDS: Record<string, { jobs: string[]; keywords: string[] }> = {
   "Education": { jobs: ["Teacher", "Academic Coordinator", "School Principal", "Lecturer", "Training Manager"], keywords: ["Education", "School", "Academic", "Teaching", "Training"] },
   "Custom / Other": { jobs: [], keywords: [] },
 };
+const AR_FIELD_LABELS: Record<string, string> = {
+  "Engineering & Manufacturing": "الهندسة والتصنيع",
+  "Information Technology": "تقنية المعلومات",
+  "Sales & Business": "المبيعات والأعمال",
+  "Finance & Accounting": "المالية والمحاسبة",
+  "Human Resources": "الموارد البشرية",
+  "Marketing": "التسويق",
+  "Construction": "الإنشاءات",
+  "Logistics & Supply Chain": "الخدمات اللوجستية وسلسلة الإمداد",
+  "Healthcare": "الرعاية الصحية",
+  "Education": "التعليم",
+  "Custom / Other": "مجال آخر",
+};
+const AR_JOB_LABELS: Record<string, string> = {
+  "Production Manager": "مدير إنتاج",
+  "Plant Manager": "مدير مصنع",
+  "Operations Manager": "مدير عمليات",
+  "Manufacturing Engineer": "مهندس تصنيع",
+  "Quality Manager": "مدير جودة",
+  "Maintenance Manager": "مدير صيانة",
+  "Software Engineer": "مهندس برمجيات",
+  "Frontend Developer": "مطور واجهات أمامية",
+  "Backend Developer": "مطور خلفي",
+  "IT Manager": "مدير تقنية معلومات",
+  "Data Analyst": "محلل بيانات",
+  "Cybersecurity Specialist": "أخصائي أمن سيبراني",
+  "Sales Manager": "مدير مبيعات",
+  "Business Development Manager": "مدير تطوير أعمال",
+  "Account Manager": "مدير حسابات",
+  "Sales Executive": "تنفيذي مبيعات",
+  "Regional Manager": "مدير إقليمي",
+  "Finance Manager": "مدير مالي",
+  "Accountant": "محاسب",
+  "Financial Analyst": "محلل مالي",
+  "Cost Controller": "مراقب تكاليف",
+  "Internal Auditor": "مدقق داخلي",
+  "HR Manager": "مدير موارد بشرية",
+  "HR Business Partner": "شريك أعمال موارد بشرية",
+  "Talent Acquisition Specialist": "أخصائي استقطاب مواهب",
+  "Recruiter": "أخصائي توظيف",
+  "HR Officer": "مسؤول موارد بشرية",
+  "Marketing Manager": "مدير تسويق",
+  "Digital Marketing Specialist": "أخصائي تسويق رقمي",
+  "Brand Manager": "مدير علامة تجارية",
+  "Content Manager": "مدير محتوى",
+  "SEO Specialist": "أخصائي تحسين محركات البحث",
+  "Project Manager": "مدير مشروع",
+  "Construction Manager": "مدير إنشاءات",
+  "Site Engineer": "مهندس موقع",
+  "Civil Engineer": "مهندس مدني",
+  "MEP Manager": "مدير أعمال ميكانيكية وكهربائية",
+  "Supply Chain Manager": "مدير سلسلة الإمداد",
+  "Logistics Manager": "مدير لوجستيات",
+  "Procurement Manager": "مدير مشتريات",
+  "Warehouse Manager": "مدير مستودع",
+  "Demand Planner": "مخطط طلب",
+  "Medical Representative": "مندوب طبي",
+  "Nurse": "ممرض",
+  "Pharmacist": "صيدلي",
+  "Hospital Administrator": "مدير مستشفى",
+  "Quality Specialist": "أخصائي جودة",
+  "Teacher": "معلم",
+  "Academic Coordinator": "منسق أكاديمي",
+  "School Principal": "مدير مدرسة",
+  "Lecturer": "محاضر",
+  "Training Manager": "مدير تدريب",
+};
+const AR_KEYWORD_LABELS: Record<string, string> = {
+  "Manufacturing": "التصنيع", "Production": "الإنتاج", "Lean Manufacturing": "التصنيع الرشيق", "Industrial": "الصناعة", "Factory": "المصنع", "Operations": "العمليات",
+  "Software": "البرمجيات", "SaaS": "البرمجيات كخدمة", "Cloud": "الحوسبة السحابية", "Web Development": "تطوير الويب", "Data": "البيانات", "Cybersecurity": "الأمن السيبراني",
+  "B2B": "مبيعات الشركات", "Business Development": "تطوير الأعمال", "Sales": "المبيعات", "Key Accounts": "الحسابات الرئيسية", "Commercial": "تجاري",
+  "Finance": "المالية", "Accounting": "المحاسبة", "Audit": "التدقيق", "FP&A": "التخطيط والتحليل المالي", "Cost Control": "مراقبة التكاليف",
+  "Human Resources": "الموارد البشرية", "Recruitment": "التوظيف", "Talent Acquisition": "استقطاب المواهب", "People Operations": "عمليات الموارد البشرية",
+  "Marketing": "التسويق", "Digital Marketing": "التسويق الرقمي", "Brand": "العلامة التجارية", "SEO": "تحسين محركات البحث", "Content": "المحتوى",
+  "Construction": "الإنشاءات", "Infrastructure": "البنية التحتية", "Civil": "مدني", "MEP": "ميكانيكا وكهرباء", "Project Management": "إدارة المشاريع",
+  "Supply Chain": "سلسلة الإمداد", "Logistics": "الخدمات اللوجستية", "Procurement": "المشتريات", "Warehouse": "المستودعات", "Planning": "التخطيط",
+  "Healthcare": "الرعاية الصحية", "Hospital": "المستشفى", "Medical": "طبي", "Pharmaceutical": "الأدوية", "Clinical": "سريري",
+  "Education": "التعليم", "School": "المدارس", "Academic": "أكاديمي", "Teaching": "التدريس", "Training": "التدريب",
+};
+const DEMO_APPLICATIONS: Application[] = [
+  { id: "demo-1", title: "Operations Manager", company: "Amazon", country: "UAE", status: "applied", date: "2026-08-31", followUp: "2026-09-05", link: "https://www.amazon.jobs/", notes: "Commercial demo data" },
+  { id: "demo-2", title: "Supply Chain Manager", company: "DHL", country: "Saudi Arabia", status: "interview", date: "2026-08-30", followUp: "2026-09-03", link: "https://careers.dhl.com/", notes: "Commercial demo data" },
+  { id: "demo-3", title: "Project Manager", company: "Siemens", country: "Qatar", status: "offer", date: "2026-08-29", followUp: "", link: "https://jobs.siemens.com/careers", notes: "Commercial demo data" },
+  { id: "demo-4", title: "Marketing Manager", company: "Unilever", country: "Saudi Arabia", status: "interested", date: "2026-08-28", followUp: "2026-09-06", link: "https://careers.unilever.com/", notes: "Commercial demo data" },
+  { id: "demo-5", title: "Financial Analyst", company: "PwC", country: "UAE", status: "new", date: "2026-08-27", followUp: "", link: "https://www.pwc.com/gx/en/careers.html", notes: "Commercial demo data" },
+  { id: "demo-6", title: "HR Business Partner", company: "Nestle", country: "UAE", status: "rejected", date: "2026-08-25", followUp: "", link: "https://www.nestle.com/jobs", notes: "Commercial demo data" },
+  { id: "demo-7", title: "Training Manager", company: "Marriott International", country: "Saudi Arabia", status: "applied", date: "2026-08-24", followUp: "2026-09-04", link: "https://careers.marriott.com/", notes: "Commercial demo data" },
+  { id: "demo-8", title: "IT Manager", company: "Microsoft", country: "Saudi Arabia", status: "interview", date: "2026-08-23", followUp: "2026-09-02", link: "https://careers.microsoft.com/", notes: "Commercial demo data" },
+];
+const IS_DEMO = typeof window !== "undefined" && Boolean((window.__SJH_EDITION__ as any)?.demo);
+
 const SEARCH_SITES = [
   { id: "google", name: "Google Jobs", prefix: "" },
   { id: "linkedin", name: "LinkedIn", prefix: "site:linkedin.com/jobs/view " },
@@ -128,7 +219,7 @@ export default function JobHunter() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [alertsOpen, setAlertsOpen] = useState(false);
   const [hydrated, setHydrated] = useState(false);
-  const [applications, setApplications] = useState<Application[]>([]);
+  const [applications, setApplications] = useState<Application[]>(IS_DEMO ? DEMO_APPLICATIONS : []);
   const [companies, setCompanies] = useState<Company[]>(INITIAL_COMPANIES);
   const [searchHistory, setSearchHistory] = useState<SearchEntry[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
@@ -159,7 +250,7 @@ export default function JobHunter() {
 
   const applyStoredData = (saved: StoredData | null | undefined) => {
     if (!saved) return;
-    const normalizedApplications = Array.isArray(saved.applications) ? saved.applications.map(normalizeApplication) : [];
+    const normalizedApplications = Array.isArray(saved.applications) && saved.applications.length ? saved.applications.map(normalizeApplication) : (IS_DEMO ? DEMO_APPLICATIONS : []);
     const normalizedCompanies = Array.isArray(saved.companies) ? saved.companies.map(normalizeCompany) : INITIAL_COMPANIES;
     const normalizedHistory = Array.isArray(saved.searchHistory) ? saved.searchHistory.map(normalizeSearchEntry) : [];
     const normalizedProfiles = Array.isArray(saved.profiles) ? saved.profiles.map(normalizeProfile) : [];
@@ -439,9 +530,9 @@ function SearchWorkspace(props: any) {
     <PageHeading eyebrow={mode === "plastics" ? "PLASTICS & MANUFACTURING" : "UNIVERSAL SEARCH"} title={t.search} text={mode === "plastics" ? "A focused profile built for production leadership across plastics manufacturing." : "Choose any career field, add your own titles and keywords, and build a precise search in seconds."} action={<div className="search-heading-actions"><button className="btn secondary reset-search-button" onClick={() => { setJobs([]); setKeywords([]); setCountries([]); setSites([]); setPeriod("all"); }}><X size={17} />{t.resetSearch}</button><button className="btn secondary" onClick={openProfile}><Plus size={17} />{t.saveProfile}</button></div>} />
     {profiles.length > 0 && <div className="saved-profiles">{profiles.map((p: Profile) => <button key={p.id} onClick={() => loadProfile(p)}><Target size={15} />{p.name}</button>)}</div>}
     <section className="search-layout"><div className="search-config">
-      {mode === "general" && <article className="panel config-card"><SectionTitle step="1" title={t.field} /><select value={field} onChange={e => { const next = e.target.value; setField(next); setJobs(FIELDS[next].jobs.slice(0, 3)); setKeywords(FIELDS[next].keywords.slice(0, 3)); }}>{Object.keys(FIELDS).map(name => <option key={name}>{name}</option>)}</select></article>}
-      <article className="panel config-card"><SectionTitle step={mode === "general" ? "2" : "1"} title={t.titles} count={jobs.length} />{jobOptions.length > 0 && <ChipGrid options={jobOptions} selected={jobs} toggle={(v: string) => toggle(v, jobs, setJobs)} />}<CustomEntry placeholder="Add custom job title" onAdd={(value: string) => addCustom(value, jobs, setJobs)} /></article>
-      <article className="panel config-card"><SectionTitle step={mode === "general" ? "3" : "2"} title={t.keywords} count={keywords.length} />{keywordOptions.length > 0 && <ChipGrid options={keywordOptions} selected={keywords} toggle={(v: string) => toggle(v, keywords, setKeywords)} />}<CustomEntry placeholder="Add custom keyword" onAdd={(value: string) => addCustom(value, keywords, setKeywords)} /></article>
+      {mode === "general" && <article className="panel config-card"><SectionTitle step="1" title={t.field} /><select value={field} onChange={e => { const next = e.target.value; setField(next); setJobs(FIELDS[next].jobs.slice(0, 3)); setKeywords(FIELDS[next].keywords.slice(0, 3)); }}>{Object.keys(FIELDS).map(name => <option key={name} value={name}>{t === AR ? (AR_FIELD_LABELS[name] || name) : name}</option>)}</select></article>}
+      <article className="panel config-card"><SectionTitle step={mode === "general" ? "2" : "1"} title={t.titles} count={jobs.length} />{jobOptions.length > 0 && <ChipGrid options={jobOptions} selected={jobs} toggle={(v: string) => toggle(v, jobs, setJobs)} label={(v: string) => t === AR ? (AR_JOB_LABELS[v] || v) : v} />}<CustomEntry placeholder="Add custom job title" onAdd={(value: string) => addCustom(value, jobs, setJobs)} /></article>
+      <article className="panel config-card"><SectionTitle step={mode === "general" ? "3" : "2"} title={t.keywords} count={keywords.length} />{keywordOptions.length > 0 && <ChipGrid options={keywordOptions} selected={keywords} toggle={(v: string) => toggle(v, keywords, setKeywords)} label={(v: string) => t === AR ? (AR_KEYWORD_LABELS[v] || v) : v} />}<CustomEntry placeholder="Add custom keyword" onAdd={(value: string) => addCustom(value, keywords, setKeywords)} /></article>
       <article className="panel config-card"><SectionTitle step={mode === "general" ? "4" : "3"} title={t.countries} count={countries.length} /><div className="quick-row"><button onClick={() => setCountries(["Saudi Arabia", "UAE", "Qatar", "Kuwait", "Oman", "Bahrain"])}>Gulf</button><button onClick={() => setCountries(["Egypt", "Angola", "DR Congo", "Kenya", "Nigeria", "Ghana", "South Africa"])}>Africa</button><button onClick={() => setCountries([])}>Clear</button></div><ChipGrid options={COUNTRIES} selected={countries} toggle={(v: string) => toggle(v, countries, setCountries)} /></article>
     </div><aside className="search-summary panel"><span className="eyebrow">SEARCH PLAN</span><h2>{t.preview}</h2><div className="summary-metrics"><div><strong>{countries.length}</strong><span>{t.countries}</span></div><div><strong>{sites.length}</strong><span>{t.sources}</span></div><div><strong>{jobs.length}</strong><span>{t.titles}</span></div></div><label>{t.sources}<div className="source-list">{SEARCH_SITES.map((source, index) => { const locked = index >= allowedSiteCount; return <button type="button" className={`${sites.includes(source.id) ? "selected" : ""} ${locked ? "locked" : ""}`} key={source.id} onClick={() => locked ? upgrade(`Your plan includes ${allowedSiteCount} job search sites.`) : toggle(source.id, sites, setSites)}>{locked ? <Lock size={13} /> : sites.includes(source.id) && <Check size={14} />}{source.name}{locked && <small>{index < 5 ? "STANDARD" : "PREMIUM"}</small>}</button>; })}</div></label><label>{t.period}<select value={period} onChange={e => setPeriod(e.target.value)}><option value="d">Last 24 hours</option><option value="w">Last week</option><option value="m">Last month</option><option value="all">Any time</option></select></label><label>{t.preview}<textarea readOnly value={query} placeholder="Select titles, keywords and countries…" /></label><button className="btn primary run-btn" disabled={!query || !sites.length} onClick={runSearch}><Search size={18} />{t.run}<span>{sites.length}</span></button><p className="safe-note"><Check size={15} /> Opens focused Google searches. No passwords or job-site accounts are accessed.</p></aside></section>
   </>;
@@ -479,7 +570,7 @@ function SettingsPage({ t, edition, policy, upgrade, dark, setDark, language, se
 function LockedPage({ title, badge, text, upgrade }: { title: string; badge: string; text: string; upgrade: (message?: string) => void }) { return <><PageHeading title={title} /><section className="panel locked-page"><div><Lock size={28} /></div><span className="eyebrow">{badge} FEATURE</span><h2>{title}</h2><p>{text}</p><button className="btn upgrade-btn" onClick={() => upgrade(text)}><Crown size={17} />Upgrade plan</button></section></>; }
 function AlertsPopover({ rows, close, edit }: { rows: Application[]; close: () => void; edit: (app: Application) => void }) { return <div className="alerts-popover"><header><div><strong>Follow-up alerts</strong><span>{rows.length ? `${rows.length} due` : "Nothing due today"}</span></div><button className="icon-btn" onClick={close}><X size={16} /></button></header>{rows.length === 0 ? <p className="alerts-empty">Your scheduled follow-ups will appear here.</p> : <div className="alerts-list">{rows.slice(0, 8).map(app => <button key={app.id} onClick={() => { edit(app); close(); }}><Clock3 size={15} /><span><strong>{app.title}</strong><small>{app.company} · {app.followUp}</small></span></button>)}</div>}</div>; }
 function SectionTitle({ step, title, count }: { step: string; title: string; count?: number }) { return <div className="section-title"><span>{step}</span><h2>{title}</h2>{typeof count === "number" && <small>{count} selected</small>}</div>; }
-function ChipGrid({ options, selected, toggle }: { options: string[]; selected: string[]; toggle: (v: string) => void }) { return <div className="chip-grid">{options.map(item => <button key={item} className={selected.includes(item) ? "selected" : ""} onClick={() => toggle(item)}>{selected.includes(item) && <Check size={14} />}{item}</button>)}</div>; }
+function ChipGrid({ options, selected, toggle, label }: { options: string[]; selected: string[]; toggle: (v: string) => void; label?: (v: string) => string }) { return <div className="chip-grid">{options.map(item => <button key={item} className={selected.includes(item) ? "selected" : ""} onClick={() => toggle(item)}>{selected.includes(item) && <Check size={14} />}{label ? label(item) : item}</button>)}</div>; }
 function CustomEntry({ placeholder, onAdd }: { placeholder: string; onAdd: (value: string) => void }) { const [value, setValue] = useState(""); return <div className="custom-entry"><input value={value} onChange={e => setValue(e.target.value)} placeholder={placeholder} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); onAdd(value); setValue(""); } }} /><button type="button" onClick={() => { onAdd(value); setValue(""); }}><Plus size={15} />Add</button></div>; }
 function StatusBadge({ status, t }: { status: Status; t: typeof EN }) { return <span className={`status-badge ${status}`}>{t[status]}</span>; }
 function ApplicationList({ rows, t }: { rows: Application[]; t: typeof EN }) { return <div className="compact-list">{rows.map(a => <article key={a.id}><div className="mini-logo">{a.company.slice(0, 2).toUpperCase()}</div><div><strong>{a.title}</strong><span>{a.company} · {a.country}</span></div><StatusBadge status={a.status} t={t} /><time>{a.date}</time></article>)}</div>; }
