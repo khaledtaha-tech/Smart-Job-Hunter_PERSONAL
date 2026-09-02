@@ -88,7 +88,7 @@ jobs:
               'tier' => 'premium',
           ];
           EOF
-          sed -i 's#./edition-config.js#./edition-config.js?v=demo-hotspot-20260902#g' "$demo/index.html"
+          sed -i 's#./edition-config.js#./edition-config.js?v=demo-hotspot-20260902b#g' "$demo/index.html"
 
       - name: Commit source change
         shell: bash
@@ -111,3 +111,5 @@ jobs:
           git add -A
           git commit -m "deploy: build Commercial Premium Demo"
           git push --force origin HEAD:deploy-commercial-demo
+
+# Triggered for the commercial demo data build.
