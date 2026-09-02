@@ -1,0 +1,195 @@
+name: One-shot Demo Seed and Arabic Labels
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/one-shot-demo-seed-arabic.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Patch Arabic labels and demo data
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path('app/job-hunter.tsx')
+          text = path.read_text(encoding='utf-8')
+
+          anchor = 'const SEARCH_SITES = ['
+          insert = '''const AR_FIELD_LABELS: Record<string, string> = {
+            "Engineering & Manufacturing": "الهندسة والتصنيع",
+            "Information Technology": "تقنية المعلومات",
+            "Sales & Business": "المبيعات والأعمال",
+            "Finance & Accounting": "المالية والمحاسبة",
+            "Human Resources": "الموارد البشرية",
+            "Marketing": "التسويق",
+            "Construction": "الإنشاءات",
+            "Logistics & Supply Chain": "الخدمات اللوجستية وسلسلة الإمداد",
+            "Healthcare": "الرعاية الصحية",
+            "Education": "التعليم",
+            "Custom / Other": "مجال آخر",
+          };
+          const AR_JOB_LABELS: Record<string, string> = {
+            "Production Manager": "مدير إنتاج",
+            "Plant Manager": "مدير مصنع",
+            "Operations Manager": "مدير عمليات",
+            "Manufacturing Engineer": "مهندس تصنيع",
+            "Quality Manager": "مدير جودة",
+            "Maintenance Manager": "مدير صيانة",
+            "Software Engineer": "مهندس برمجيات",
+            "Frontend Developer": "مطور واجهات أمامية",
+            "Backend Developer": "مطور خلفي",
+            "IT Manager": "مدير تقنية معلومات",
+            "Data Analyst": "محلل بيانات",
+            "Cybersecurity Specialist": "أخصائي أمن سيبراني",
+            "Sales Manager": "مدير مبيعات",
+            "Business Development Manager": "مدير تطوير أعمال",
+            "Account Manager": "مدير حسابات",
+            "Sales Executive": "تنفيذي مبيعات",
+            "Regional Manager": "مدير إقليمي",
+            "Finance Manager": "مدير مالي",
+            "Accountant": "محاسب",
+            "Financial Analyst": "محلل مالي",
+            "Cost Controller": "مراقب تكاليف",
+            "Internal Auditor": "مدقق داخلي",
+            "HR Manager": "مدير موارد بشرية",
+            "HR Business Partner": "شريك أعمال موارد بشرية",
+            "Talent Acquisition Specialist": "أخصائي استقطاب مواهب",
+            "Recruiter": "أخصائي توظيف",
+            "HR Officer": "مسؤول موارد بشرية",
+            "Marketing Manager": "مدير تسويق",
+            "Digital Marketing Specialist": "أخصائي تسويق رقمي",
+            "Brand Manager": "مدير علامة تجارية",
+            "Content Manager": "مدير محتوى",
+            "SEO Specialist": "أخصائي تحسين محركات البحث",
+            "Project Manager": "مدير مشروع",
+            "Construction Manager": "مدير إنشاءات",
+            "Site Engineer": "مهندس موقع",
+            "Civil Engineer": "مهندس مدني",
+            "MEP Manager": "مدير أعمال ميكانيكية وكهربائية",
+            "Supply Chain Manager": "مدير سلسلة الإمداد",
+            "Logistics Manager": "مدير لوجستيات",
+            "Procurement Manager": "مدير مشتريات",
+            "Warehouse Manager": "مدير مستودع",
+            "Demand Planner": "مخطط طلب",
+            "Medical Representative": "مندوب طبي",
+            "Nurse": "ممرض",
+            "Pharmacist": "صيدلي",
+            "Hospital Administrator": "مدير مستشفى",
+            "Quality Specialist": "أخصائي جودة",
+            "Teacher": "معلم",
+            "Academic Coordinator": "منسق أكاديمي",
+            "School Principal": "مدير مدرسة",
+            "Lecturer": "محاضر",
+            "Training Manager": "مدير تدريب",
+          };
+          const AR_KEYWORD_LABELS: Record<string, string> = {
+            "Manufacturing": "التصنيع", "Production": "الإنتاج", "Lean Manufacturing": "التصنيع الرشيق", "Industrial": "الصناعة", "Factory": "المصنع", "Operations": "العمليات",
+            "Software": "البرمجيات", "SaaS": "البرمجيات كخدمة", "Cloud": "الحوسبة السحابية", "Web Development": "تطوير الويب", "Data": "البيانات", "Cybersecurity": "الأمن السيبراني",
+            "B2B": "مبيعات الشركات", "Business Development": "تطوير الأعمال", "Sales": "المبيعات", "Key Accounts": "الحسابات الرئيسية", "Commercial": "تجاري",
+            "Finance": "المالية", "Accounting": "المحاسبة", "Audit": "التدقيق", "FP&A": "التخطيط والتحليل المالي", "Cost Control": "مراقبة التكاليف",
+            "Human Resources": "الموارد البشرية", "Recruitment": "التوظيف", "Talent Acquisition": "استقطاب المواهب", "People Operations": "عمليات الموارد البشرية",
+            "Marketing": "التسويق", "Digital Marketing": "التسويق الرقمي", "Brand": "العلامة التجارية", "SEO": "تحسين محركات البحث", "Content": "المحتوى",
+            "Construction": "الإنشاءات", "Infrastructure": "البنية التحتية", "Civil": "مدني", "MEP": "ميكانيكا وكهرباء", "Project Management": "إدارة المشاريع",
+            "Supply Chain": "سلسلة الإمداد", "Logistics": "الخدمات اللوجستية", "Procurement": "المشتريات", "Warehouse": "المستودعات", "Planning": "التخطيط",
+            "Healthcare": "الرعاية الصحية", "Hospital": "المستشفى", "Medical": "طبي", "Pharmaceutical": "الأدوية", "Clinical": "سريري",
+            "Education": "التعليم", "School": "المدارس", "Academic": "أكاديمي", "Teaching": "التدريس", "Training": "التدريب",
+          };
+          const DEMO_APPLICATIONS: Application[] = [
+            { id: "demo-1", title: "Operations Manager", company: "Amazon", country: "UAE", status: "applied", date: "2026-08-31", followUp: "2026-09-05", link: "https://www.amazon.jobs/", notes: "Commercial demo data" },
+            { id: "demo-2", title: "Supply Chain Manager", company: "DHL", country: "Saudi Arabia", status: "interview", date: "2026-08-30", followUp: "2026-09-03", link: "https://careers.dhl.com/", notes: "Commercial demo data" },
+            { id: "demo-3", title: "Project Manager", company: "Siemens", country: "Qatar", status: "offer", date: "2026-08-29", followUp: "", link: "https://jobs.siemens.com/careers", notes: "Commercial demo data" },
+            { id: "demo-4", title: "Marketing Manager", company: "Unilever", country: "Saudi Arabia", status: "interested", date: "2026-08-28", followUp: "2026-09-06", link: "https://careers.unilever.com/", notes: "Commercial demo data" },
+            { id: "demo-5", title: "Financial Analyst", company: "PwC", country: "UAE", status: "new", date: "2026-08-27", followUp: "", link: "https://www.pwc.com/gx/en/careers.html", notes: "Commercial demo data" },
+            { id: "demo-6", title: "HR Business Partner", company: "Nestle", country: "UAE", status: "rejected", date: "2026-08-25", followUp: "", link: "https://www.nestle.com/jobs", notes: "Commercial demo data" },
+            { id: "demo-7", title: "Training Manager", company: "Marriott International", country: "Saudi Arabia", status: "applied", date: "2026-08-24", followUp: "2026-09-04", link: "https://careers.marriott.com/", notes: "Commercial demo data" },
+            { id: "demo-8", title: "IT Manager", company: "Microsoft", country: "Saudi Arabia", status: "interview", date: "2026-08-23", followUp: "2026-09-02", link: "https://careers.microsoft.com/", notes: "Commercial demo data" },
+          ];
+          const IS_DEMO = typeof window !== "undefined" && Boolean((window.__SJH_EDITION__ as any)?.demo);
+          '''
+          if 'const AR_JOB_LABELS:' not in text:
+              text = text.replace(anchor, insert + '\n' + anchor, 1)
+
+          text = text.replace('const [applications, setApplications] = useState<Application[]>([]);', 'const [applications, setApplications] = useState<Application[]>(IS_DEMO ? DEMO_APPLICATIONS : []);')
+          text = text.replace('const normalizedApplications = Array.isArray(saved.applications) ? saved.applications.map(normalizeApplication) : [];', 'const normalizedApplications = Array.isArray(saved.applications) && saved.applications.length ? saved.applications.map(normalizeApplication) : (IS_DEMO ? DEMO_APPLICATIONS : []);')
+
+          old_field = '{Object.keys(FIELDS).map(name => <option key={name}>{name}</option>)}'
+          new_field = '{Object.keys(FIELDS).map(name => <option key={name} value={name}>{t === AR ? (AR_FIELD_LABELS[name] || name) : name}</option>)}'
+          text = text.replace(old_field, new_field)
+
+          old_jobs = '<ChipGrid options={jobOptions} selected={jobs} toggle={(v: string) => toggle(v, jobs, setJobs)} />'
+          new_jobs = '<ChipGrid options={jobOptions} selected={jobs} toggle={(v: string) => toggle(v, jobs, setJobs)} label={(v: string) => t === AR ? (AR_JOB_LABELS[v] || v) : v} />'
+          text = text.replace(old_jobs, new_jobs)
+
+          old_keys = '<ChipGrid options={keywordOptions} selected={keywords} toggle={(v: string) => toggle(v, keywords, setKeywords)} />'
+          new_keys = '<ChipGrid options={keywordOptions} selected={keywords} toggle={(v: string) => toggle(v, keywords, setKeywords)} label={(v: string) => t === AR ? (AR_KEYWORD_LABELS[v] || v) : v} />'
+          text = text.replace(old_keys, new_keys)
+
+          old_chip = 'function ChipGrid({ options, selected, toggle }: { options: string[]; selected: string[]; toggle: (v: string) => void }) { return <div className="chip-grid">{options.map(item => <button key={item} className={selected.includes(item) ? "selected" : ""} onClick={() => toggle(item)}>{selected.includes(item) && <Check size={14} />}{item}</button>)}</div>; }'
+          new_chip = 'function ChipGrid({ options, selected, toggle, label }: { options: string[]; selected: string[]; toggle: (v: string) => void; label?: (v: string) => string }) { return <div className="chip-grid">{options.map(item => <button key={item} className={selected.includes(item) ? "selected" : ""} onClick={() => toggle(item)}>{selected.includes(item) && <Check size={14} />}{label ? label(item) : item}</button>)}</div>; }'
+          text = text.replace(old_chip, new_chip)
+
+          path.write_text(text, encoding='utf-8')
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build editions
+        run: npm run build:editions
+
+      - name: Prepare commercial demo
+        shell: bash
+        run: |
+          demo="releases/Smart-Job-Hunter-Commercial-Premium"
+          cat > "$demo/edition-config.js" <<'EOF'
+          window.__SJH_EDITION__ = {
+            edition: "commercial",
+            tier: "premium",
+            showPlastics: false,
+            defaultMode: "general",
+            auth: false,
+            demo: true,
+            displayName: "Ahmad",
+            buyUrl: ""
+          };
+          EOF
+          sed -i 's#./edition-config.js#./edition-config.js?v=demo-arabic-20260902#g' "$demo/index.html"
+
+      - name: Commit source change
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/job-hunter.tsx
+          git commit -m "feat: localize career chips and seed commercial demo" || true
+          git push origin HEAD:main
+
+      - name: Publish commercial demo branch
+        shell: bash
+        run: |
+          demo="releases/Smart-Job-Hunter-Commercial-Premium"
+          temp_dir="$(mktemp -d)"
+          cp -R "$demo/." "$temp_dir/"
+          git checkout --orphan publish-commercial-demo
+          git rm -rf . >/dev/null 2>&1 || true
+          cp -R "$temp_dir/." .
+          git add -A
+          git commit -m "deploy: seed Commercial Premium Demo"
+          git push --force origin HEAD:deploy-commercial-demo
