@@ -1,0 +1,113 @@
+name: One-shot Commercial Demo Hotspot
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/one-shot-demo-hotspot.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Add commercial demo hotspot
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path('app/job-hunter.tsx')
+          text = path.read_text(encoding='utf-8')
+
+          anchor = 'const DEFAULT_EDITION: EditionConfig = { edition: "personal", tier: "premium", showPlastics: true, defaultMode: "plastics", auth: false, displayName: "Khaled Taha", buyUrl: "" };'
+          demo_block = '''const COMMERCIAL_DEMO_APPLICATIONS: Application[] = [
+            { id: "demo-1", title: "Operations Manager", company: "Amazon", country: "UAE", status: "interview", date: "2026-08-31", followUp: "2026-09-04", link: "https://www.amazon.jobs/", notes: "Second interview scheduled" },
+            { id: "demo-2", title: "Project Manager", company: "Siemens", country: "Saudi Arabia", status: "applied", date: "2026-08-30", followUp: "2026-09-05", link: "https://jobs.siemens.com/careers", notes: "Application submitted" },
+            { id: "demo-3", title: "Business Development Manager", company: "Microsoft", country: "UAE", status: "interested", date: "2026-08-29", followUp: "2026-09-06", link: "https://careers.microsoft.com/", notes: "High-priority opportunity" },
+            { id: "demo-4", title: "Supply Chain Manager", company: "Unilever", country: "Saudi Arabia", status: "new", date: "2026-08-28", followUp: "", link: "https://careers.unilever.com/", notes: "Newly saved opportunity" },
+            { id: "demo-5", title: "Plant Manager", company: "SABIC", country: "Saudi Arabia", status: "offer", date: "2026-08-26", followUp: "", link: "https://careers.sabic.com/", notes: "Offer received" },
+            { id: "demo-6", title: "Logistics Manager", company: "DHL", country: "UAE", status: "rejected", date: "2026-08-25", followUp: "", link: "https://careers.dhl.com/", notes: "Closed application" },
+            { id: "demo-7", title: "Procurement Manager", company: "Nestle", country: "Saudi Arabia", status: "applied", date: "2026-08-24", followUp: "2026-09-03", link: "https://www.nestle.com/jobs", notes: "Follow-up planned" },
+            { id: "demo-8", title: "Regional Operations Manager", company: "Emirates Group", country: "UAE", status: "interview", date: "2026-08-23", followUp: "2026-09-07", link: "https://www.emiratesgroupcareers.com/", notes: "Interview preparation" },
+            { id: "demo-9", title: "Production Manager", company: "Saudi Aramco", country: "Saudi Arabia", status: "new", date: "2026-08-22", followUp: "", link: "https://careers.aramco.com/", notes: "Saved for review" },
+          ];
+
+'''
+          if 'const COMMERCIAL_DEMO_APPLICATIONS' not in text:
+              if anchor not in text:
+                  raise SystemExit('Edition anchor not found')
+              text = text.replace(anchor, demo_block + anchor, 1)
+
+          content_anchor = '        <div className="content">\n'
+          hotspot = '''        <div className="content">\n          {EDITION.edition === "commercial" && EDITION.tier === "premium" && (\n            <button\n              type="button"\n              aria-label="Load demo data"\n              title=""\n              onClick={() => setApplications(COMMERCIAL_DEMO_APPLICATIONS.map(item => ({ ...item })))}\n              style={{ position: "fixed", left: 4, bottom: 4, width: 22, height: 22, opacity: 0.01, border: 0, background: "transparent", padding: 0, zIndex: 9999, cursor: "default" }}\n            />\n          )}\n'''
+          if 'aria-label="Load demo data"' not in text:
+              if content_anchor not in text:
+                  raise SystemExit('Content anchor not found')
+              text = text.replace(content_anchor, hotspot, 1)
+
+          path.write_text(text, encoding='utf-8')
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build editions
+        run: npm run build:editions
+
+      - name: Prepare commercial demo
+        shell: bash
+        run: |
+          demo="releases/Smart-Job-Hunter-Commercial-Premium"
+          cat > "$demo/edition-config.js" <<'EOF'
+          window.__SJH_EDITION__ = {
+            edition: "commercial",
+            tier: "premium",
+            showPlastics: false,
+            defaultMode: "general",
+            auth: false,
+            displayName: "Ahmad",
+            buyUrl: ""
+          };
+          EOF
+          cat > "$demo/product-config.php" <<'EOF'
+          <?php
+          return [
+              'edition' => 'commercial',
+              'tier' => 'premium',
+          ];
+          EOF
+          sed -i 's#./edition-config.js#./edition-config.js?v=demo-hotspot-20260902#g' "$demo/index.html"
+
+      - name: Commit source change
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/job-hunter.tsx
+          git commit -m "feat: add hidden commercial demo data hotspot" || true
+          git push origin HEAD:main
+
+      - name: Publish commercial demo branch
+        shell: bash
+        run: |
+          demo="releases/Smart-Job-Hunter-Commercial-Premium"
+          temp_dir="$(mktemp -d)"
+          cp -R "$demo/." "$temp_dir/"
+          git checkout --orphan publish-commercial-demo
+          git rm -rf . >/dev/null 2>&1 || true
+          cp -R "$temp_dir/." .
+          git add -A
+          git commit -m "deploy: build Commercial Premium Demo"
+          git push --force origin HEAD:deploy-commercial-demo
